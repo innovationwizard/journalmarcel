@@ -1,6 +1,7 @@
 import imaplib
 import email
 from email.header import decode_header
+import html2text
 import os
 import re
 from datetime import datetime
@@ -64,6 +65,7 @@ def get_email_content(msg):
             elif content_type == "text/html" and html is None:
                 charset = part.get_content_charset() or 'utf-8'
                 html = part.get_payload(decode=True).decode(charset, errors='replace')
+                body = html2text.html2text(html)  # Convert HTML to markdown
     else:
         content_type = msg.get_content_type()
         if content_type == "text/plain":
