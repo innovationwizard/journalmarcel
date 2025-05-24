@@ -106,49 +106,74 @@ draft = false
     print(f"Created post: {filepath}")
 
 def main():
-    mail = imaplib.IMAP4_SSL(IMAP_SERVER)
-    mail.login(EMAIL_ACCOUNT, PASSWORD)
-    mail.select("inbox")
-
-    status, messages = mail.search(None, 'UNSEEN')
-    if status != 'OK':
-        print("No messages found!")
+    try:
+        # Connect to IMAP server
+        mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+        mail.login(EMAIL_ACCOUNT, PASSWORD)
+        mail.select("inbox")
+    except Exception as e:
+        print(f"Failed to connect or login to IMAP server: {e}")
         return
 
-    email_ids = messages[0].split()
-    print(f"Found {len(email_ids)} unread emails.")
-
-    for eid in email_ids:
-        status, msg_data = mail.fetch(eid, '(RFC822)')
+    try:
+        # Search for unread emails
+        status, messages = mail.search(None, 'UNSEEN')
         if status != 'OK':
-            print(f"Failed to fetch email id {eid}")
-            continue
+            print("Failed to search for unread emails!")
+            mail.logout()
+            return
 
-        raw_email = msg_data[0][1]
-        msg = email.message_from_bytes(raw_email)
+        email_ids = messages[0].split()
+        print(f"Found {len(email_ids)} unread emails.")
 
-        subject = msg['Subject']
-        if subject:
-            subject = decode_mime_words(subject)
-        else:
-            subject = "No Subject"
+        for eid in email_ids:
+            try:
+                # Fetch email
+                status, msg_data = mail.fetch(eid, '(RFC822)')
+                if status != 'OK':
+                    print(f"Failed to fetch email ID {eid}")
+                    continue
 
-        date_tuple = email.utils.parsedate_tz(msg['Date'])
-        if date_tuple:
-            date = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
-        else:
-            date = datetime.now()
+                raw_email = msg_data[0][1]
+                msg = email.message_from_bytes(raw_email)
 
-        body, html, attachments = get_email_content(msg)
+                # Extract subject
+                subject = msg['Subject']
+                if subject:
+                    subject = decode_mime_words(subject)
+                else:
+                    subject = "No Subject"
 
-        # Prefer plain text body; you can extend to convert html to markdown if needed
-        content = body or (html if html else "")
+                # Extract date
+                date_tuple = email.utils.parsedate_tz(msg['Date'])
+                if date_tuple:
+                    date = datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
+                else:
+                    date = datetime.now()
 
-        create_markdown_file(subject, date, content, attachments)
+                # Get email content and attachments
+                body, html, attachments = get_email_content(msg)
+                content = body or (html if html else "")
 
-        mail.store(eid, '+FLAGS', '\\Seen')
+                # Create markdown file; mark email as "read" only on success
+                try:
+                    create_markdown_file(subject, date, content, attachments)
+                    mail.store(eid, '+FLAGS', '\\Seen')  # Mark as "read" after success
+                except Exception as e:
+                    print(f"Failed to create markdown file for email ID {eid}: {e}")
+                    continue
 
-    mail.logout()
+            except Exception as e:
+                print(f"Error processing email ID {eid}: {e}")
+                continue
+
+    except Exception as e:
+        print(f"Error during email processing: {e}")
+    finally:
+        try:
+            mail.logout()
+        except Exception as e:
+            print(f"Failed to logout from IMAP server: {e}")
 
 if __name__ == "__main__":
     main()
