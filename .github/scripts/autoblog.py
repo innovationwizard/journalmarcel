@@ -11,8 +11,8 @@ IMAP_SERVER = 'imap.zoho.com'
 EMAIL_ACCOUNT = os.environ.get('ZOHO_EMAIL')
 PASSWORD = os.environ.get('ZOHO_APP_PASSWORD')
 
-POSTS_DIR = 'content/posts'
-ATTACHMENTS_DIR = 'content/posts/attachments'
+POSTS_DIR = 'public/posts'
+ATTACHMENTS_DIR = 'public/posts/attachments'
 
 os.makedirs(POSTS_DIR, exist_ok=True)
 os.makedirs(ATTACHMENTS_DIR, exist_ok=True)
