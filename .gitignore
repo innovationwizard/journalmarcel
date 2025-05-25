@@ -1,0 +1,13 @@
+# macOS system files
+.DS_Store
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Virtual environment folder
+venv/
+
+# Other OS junk files
+Thumbs.db
+
