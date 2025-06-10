@@ -1,5 +1,0 @@
-theme = "PaperMod"
-baseURL = "https://innovationwizard.github.io/journalmarcel/"
-publishDir = "docs"
-title = 'Journal Marcel'
-
